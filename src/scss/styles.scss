@@ -1,0 +1,12 @@
+.gallery {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.gallery img {
+  width: 300;
+  margin: 20;
+}
+.gallery p {
+  margin-left: 20;
+}
