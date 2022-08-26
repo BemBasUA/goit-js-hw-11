@@ -17,21 +17,26 @@ let counterValue = 1;
 disableBtn();
 
 async function fetchImagesByName(name) {
-  const response = await fetch(
-    `https://pixabay.com/api/?key=29476807-778104ca63f185ac7ce275560&q=${name}&image_type=photo&orientation=horizontal&safesearch=true&page=${counterValue}&per_page=40`
-  );
-  const images = await response.json();
+  try {
+    const response = await fetch(
+      `https://pixabay.com/api/?key=29476807-778104ca63f185ac7ce275560&q=${name}&image_type=photo&orientation=horizontal&safesearch=true&page=${counterValue}&per_page=40`
+    );
+    const images = await response.json();
 
-  return images.hits;
+    return images;
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 async function onLodeMoreBtnClick(e) {
   counterValue += 1;
   const searchValue = refs.searchBox.value;
-  const hits = await fetchImagesByName(`${searchValue}`);
+  const images = await fetchImagesByName(`${searchValue}`);
+  const hits = await images.hits;
   createGalleryMarkup(hits);
   refs.gallery.insertAdjacentHTML(`beforeend`, markup);
-  const totalHits = await fetchTotalHits();
+  const totalHits = await images.totalHits;
   if (refs.gallery.children.length >= totalHits) {
     Notiflix.Notify.failure(
       `We're sorry, but you've reached the end of search results.`
@@ -43,14 +48,21 @@ async function onLodeMoreBtnClick(e) {
 async function onFormSubmit(e) {
   disableBtn();
   e.preventDefault();
-  const totalHits = await fetchTotalHits();
-  Notiflix.Notify.success(`Hooray! We found ${totalHits} images.`);
   counterValue = 1;
   const searchValue = refs.searchBox.value;
-  const hits = await fetchImagesByName(`${searchValue}`);
+  const images = await fetchImagesByName(`${searchValue}`);
+  const totalHits = await images.totalHits;
+  if (totalHits > 0) {
+    Notiflix.Notify.success(`Hooray! We found ${totalHits} images.`);
+  } else {
+    Notiflix.Notify.failure(`Sorry we didnt found any images.`);
+  }
+  const hits = await images.hits;
   createGalleryMarkup(hits);
   refs.gallery.innerHTML = markup;
-  enableBtn();
+  if (totalHits > hits.length) {
+    enableBtn();
+  }
 }
 
 function createGalleryMarkup(hits) {
@@ -75,14 +87,6 @@ function createGalleryMarkup(hits) {
     </div>`;
     })
     .join(``);
-}
-
-async function fetchTotalHits() {
-  const response = await fetch(
-    `https://pixabay.com/api/?key=29476807-778104ca63f185ac7ce275560&q`
-  );
-  const images = await response.json();
-  return images.totalHits;
 }
 
 function disableBtn() {
